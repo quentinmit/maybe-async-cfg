@@ -22,6 +22,11 @@ pub trait PubTrait {
     }
 }
 
+#[maybe_async_cfg::maybe(sync(feature = "is_sync", keep_self), async(not(feature = "is_sync"), self = "async"))]
+mod blocking {
+    pub async fn async_fn() {}
+}
+
 #[maybe_async_cfg::maybe(keep_self, sync(feature = "is_sync"), async(not(feature = "is_sync")))]
 async fn async_fn() {}
 
@@ -49,6 +54,7 @@ fn main() -> std::result::Result<(), ()> {
     s.async_fn();
     async_fn();
     pub_async_fn();
+    r#async::async_fn();
     Ok(())
 }
 
@@ -61,4 +67,5 @@ async fn main() {
     s.async_fn().await;
     async_fn().await;
     pub_async_fn().await;
+    r#async::async_fn().await;
 }

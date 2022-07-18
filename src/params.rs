@@ -7,7 +7,7 @@ use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use syn::{
     punctuated::Punctuated, spanned::Spanned, token::Comma, Attribute, AttributeArgs, Ident, Lit,
-    LitStr, Meta, MetaNameValue, NestedMeta, MetaList, 
+    LitStr, Meta, MetaNameValue, NestedMeta, MetaList, parse_str
 };
 
 use crate::{
@@ -83,10 +83,16 @@ impl IdentRecord {
             return ident.clone();
         }
 
+        let new_ident = |name| {
+            let mut new = parse_str::<Ident>(&format!("r#{}", name)).unwrap();
+            new.set_span(ident.span());
+            new
+        };
+
         if let Some(version_name) = version_name {
             if let Some(idents) = self.idents.as_ref() {
                 if let Some(value) = idents.get(version_name) {
-                    return Ident::new(value, ident.span());
+                    return new_ident(value);
                 }
             }
         }
@@ -94,12 +100,12 @@ impl IdentRecord {
         match convert_mode {
             ConvertMode::IntoSync => {
                 if let Some(name) = &self.ident_sync {
-                    return Ident::new(&name, ident.span());
+                    return new_ident(&name);
                 }
             }
             ConvertMode::IntoAsync => {
                 if let Some(name) = &self.ident_async {
-                    return Ident::new(&name, ident.span());
+                    return new_ident(&name);
                 }
             }
         };

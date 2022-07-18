@@ -8,7 +8,7 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use syn::{
     parse_macro_input, spanned::Spanned, visit_mut::VisitMut, File, ImplItem, ItemEnum, ItemFn,
-    ItemImpl, ItemStruct, ItemTrait, ItemUse, TraitItem, Type, TypePath,
+    ItemImpl, ItemStruct, ItemTrait, ItemUse, ItemMod, TraitItem, Type, TypePath,
 };
 
 #[allow(unused_imports)]
@@ -84,6 +84,7 @@ pub fn convert(mut params: MacroParameters, input: TokenStream, convert_mode: Co
             syn::Item::Trait(item) => convert_trait(&mut params, item, convert_mode),
             syn::Item::Fn(item) => convert_fn(&mut params, item, convert_mode),
             syn::Item::Use(item) => convert_use(&mut params, item, convert_mode),
+            syn::Item::Mod(item) => convert_mod(&mut params, item, convert_mode),
             _ => {
                 abort!(item.span(), "Allowed impl, struct, enum, trait, fn or use items only");
             }
@@ -190,6 +191,12 @@ fn convert_fn(params: &mut MacroParameters, item: &mut ItemFn, convert_mode: Con
 fn convert_use(params: &mut MacroParameters, item: &mut ItemUse, convert_mode: ConvertMode) {
     let mut visitor = Visitor::new(AsyncAwaitVisitor::new(params, convert_mode));
     visitor.visit_item_use_mut(item)
+}
+
+fn convert_mod(params: &mut MacroParameters, item: &mut ItemMod, convert_mode: ConvertMode) {
+    params.original_self_name_set(item.ident.to_string(), true);
+    let mut visitor = Visitor::new(AsyncAwaitVisitor::new(params, convert_mode));
+    visitor.visit_item_mod_mut(item)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
